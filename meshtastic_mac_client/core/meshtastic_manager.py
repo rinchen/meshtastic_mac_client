@@ -42,35 +42,53 @@ class MeshtasticManager:
     async def connect(self, address):
         """Connect to a Meshtastic device over BLE."""
         try:
-            logger.info(f"Connecting to {address}...")
-            # BLEInterface is synchronous; we run it in an executor
+            logger.info(f"Attempting BLE handshake with {address}...")
+            
+            # 1. Create the interface
             self.client = await self.loop.run_in_executor(None, lambda: BLEInterface(address))
             
-            # GIVE THE RADIO TIME TO HANDSHAKE
-            # This ensures get_local_node_name() has data when the UI calls it
-            await asyncio.sleep(2.0)
-            
-            self.is_connected = True
-            return True
+            # 2. POLL FOR READINESS
+            # We wait up to 10 seconds for the 'myId' attribute to be populated by the library
+            max_retries = 10
+            while max_retries > 0:
+                if hasattr(self.client, 'myId') and self.client.myId:
+                    logger.info(f"Connected successfully. Local ID: {self.client.myId}")
+                    self.is_connected = True
+                    return True
+                
+                logger.info("Waiting for radio handshake (myId)...")
+                await asyncio.sleep(1.0)
+                max_retries -= 1
+
+            logger.error("Connection established but radio failed to provide Node ID.")
+            return False
+
         except Exception as e:
-            logger.error(f"Connection failed: {e}")
+            logger.error(f"Detailed connection failure: {e}", exc_info=True)
             self.is_connected = False
             return False
 
     async def disconnect(self):
         """Disconnect safely without hanging the event loop."""
-        if self.client:
-            logger.info("Disconnecting...")
-            try:
-                # We must await the executor and ensure it's not blocked
-                # BLEInterface.close() is a blocking call
-                await self.loop.run_in_executor(None, self.client.close)
-                logger.info("Interface closed successfully.")
-            except Exception as e:
-                logger.error(f"Error during disconnect: {e}")
-            finally:
-                self.client = None
-                self.is_connected = False
+        if not self.client:
+            return
+
+        logger.info("Initiating disconnect sequence...")
+        try:
+            # We use the executor because client.close() is a blocking I/O call
+            await asyncio.wait_for(
+                self.loop.run_in_executor(None, self.client.close),
+                timeout=3.0
+            )
+            logger.info("Meshtastic interface closed successfully.")
+        except asyncio.TimeoutError:
+            logger.warning("Radio did not acknowledge disconnect in time; forcing cleanup.")
+        except Exception as e:
+            logger.error(f"Unexpected error during disconnect: {e}")
+        finally:
+            self.client = None
+            self.is_connected = False
+            logger.info("Manager state reset to disconnected.")
 
     def get_local_node_name(self):
         """Returns the Long Name of the connected radio."""

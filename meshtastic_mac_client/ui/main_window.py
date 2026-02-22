@@ -13,6 +13,8 @@ from meshtastic_mac_client.ui.map_panel import MapPanel
 from meshtastic_mac_client.ui.telemetry_panel import TelemetryPanel
 from meshtastic_mac_client.ui.admin_panel import AdminPanel
 import asyncio
+import logging
+logger = logging.getLogger(__name__)
 
 class MainWindow(QMainWindow):
     def __init__(self, loop):
@@ -93,7 +95,7 @@ class MainWindow(QMainWindow):
 
         # Update the List
         if hasattr(self, 'node_list_panel'):
-            self.node_list_panel.refresh_list()
+            self.nodes_panel.refresh_list()
 
     def refresh_map(self):
         """Fetch all nodes from DB and refresh the map markers."""
@@ -102,6 +104,7 @@ class MainWindow(QMainWindow):
 
     def on_connecting(self, name):
         self.status_bar.showMessage(f"Connecting to {name}...")
+        logger.info(f"UI initiating connection to: {name}")
 
     def on_device_connected(self, address):
         # Fetch the radio name from the manager
@@ -128,24 +131,21 @@ class MainWindow(QMainWindow):
 
     async def handle_exit(self, event):
         """Cleanup resources and stop the loop."""
-        print("Starting graceful shutdown...")
+        logger.info("Starting graceful shutdown...")
         try:
-            if self.manager:
-                # 1. Wait for the manager to finish closing the radio
-                await asyncio.wait_for(self.manager.disconnect(), timeout=5.0)
-
-            # 2. Shutdown the executor to ensure no background threads are hanging
-            # This is the "secret sauce" to prevent the force-quit requirement
-            executor = self.loop._default_executor
-            if executor:
-                executor.shutdown(wait=True)
-
+            if self.manager and self.manager.is_connected:
+                logger.info("Requesting manager disconnect...")
+                await asyncio.wait_for(self.manager.disconnect(), timeout=2.0)
         except Exception as e:
-            print(f"Shutdown notice: {e}")
+            logger.warning(f"Shutdown cleanup encountered an issue: {e}")
         finally:
-            # 3. Stop the loop and finally quit the application
+            logger.info("Closing event loop and quitting.")
             self.loop.stop()
             QApplication.instance().quit()
+            
+            # FIXME for hang
+            logger.info("ERROR: program hung!")
+            QTimer.singleShot(1000, lambda: sys.exit(0))
 
 if __name__ == "__main__":
     import sys
