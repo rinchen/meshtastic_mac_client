@@ -83,8 +83,8 @@ class MainWindow(QMainWindow):
 
     def on_device_connected(self, address):
         # Fetch the radio name from the manager
-        radio_name = self.manager.get_local_node_name()"
-        self.status_bar.showMessage(f"Connected: {radio_name})")
+        radio_name = self.manager.get_local_node_name()
+        self.status_bar.showMessage(f"Connected: {radio_name}")
 
     def on_device_disconnected(self):
         self.status_bar.showMessage("Disconnected")
