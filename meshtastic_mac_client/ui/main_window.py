@@ -83,7 +83,7 @@ class MainWindow(QMainWindow):
 
     def on_device_connected(self, address):
         # Fetch the radio name from the manager
-        radio_name = self.manager.get_local_node_name() or "Radio"
+        radio_name = self.manager.get_local_node_name()"
         self.status_bar.showMessage(f"Connected: {radio_name})")
 
     def on_device_disconnected(self):
@@ -107,22 +107,14 @@ class MainWindow(QMainWindow):
     async def handle_exit(self, event):
         """Cleanup resources and stop the loop."""
         self.status_bar.showMessage("Shutting down...")
-
         try:
-            # 1. Disconnect the radio if connected
-            # We use a shield to ensure the disconnect finishes even if the window closes
-            if self.manager.is_connected:
-                await asyncio.shield(asyncio.wait_for(self.manager.disconnect(), timeout=2.0))
-
-        except asyncio.TimeoutError:
-            print("Shutdown: Disconnect timed out.")
-        except Exception as e:
-            print(f"Error during shutdown: {e}")
-
+            if self.manager and self.manager.is_connected:
+                # Give it 3 seconds, but don't shield it so long it hangs the OS
+                await asyncio.wait_for(self.manager.disconnect(), timeout=3.0)
+        except (asyncio.TimeoutError, Exception) as e:
+            print(f"Shutdown notice: {e}")
         finally:
-            # 2. Crucially: Stop the qasync loop first
             self.loop.stop()
-            # 3. Then tell the application to exit
             QApplication.instance().quit()
 
 if __name__ == "__main__":

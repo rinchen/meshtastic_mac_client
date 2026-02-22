@@ -72,7 +72,8 @@ class ConnectionPanel(QWidget):
             
             if success:
                 self.btn_disconnect.setEnabled(True)
-                radio_name = self.main.manager.get_local_node_name() or "Connected"
+                radio_name = self.main.manager.get_local_node_name()
+                display_name = radio_name if radio_name else address
                 self.lbl_status.setText(f"Status: Connected to {radio_name}")
                 self.signals.connected.emit(address)
             else:

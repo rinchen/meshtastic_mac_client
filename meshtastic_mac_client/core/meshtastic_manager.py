@@ -40,8 +40,13 @@ class MeshtasticManager:
         """Connect to a Meshtastic device over BLE."""
         try:
             logger.info(f"Connecting to {address}...")
-            # BLEInterface is synchronous; we run it in an executor to avoid blocking the loop
+            # BLEInterface is synchronous; we run it in an executor
             self.client = await self.loop.run_in_executor(None, lambda: BLEInterface(address))
+            
+            # GIVE THE RADIO TIME TO HANDSHAKE
+            # This ensures get_local_node_name() has data when the UI calls it
+            await asyncio.sleep(2.0)
+            
             self.is_connected = True
             return True
         except Exception as e:
@@ -54,12 +59,29 @@ class MeshtasticManager:
         if self.client:
             logger.info("Disconnecting...")
             try:
+                # Use a shorter executor timeout for the library close call
                 await self.loop.run_in_executor(None, self.client.close)
             except Exception as e:
                 logger.error(f"Error during disconnect: {e}")
             finally:
                 self.client = None
                 self.is_connected = False
+
+    def get_local_node_name(self):
+        """Returns the Long Name of the connected radio."""
+        if not self.client or not self.is_connected:
+            return None
+        try:
+            # Check the library's metadata first
+            my_info = self.client.getMyNodeInfo()
+            if my_info and 'user' in my_info:
+                return my_info['user'].get('longName')
+            
+            # Fallback to the ID (e.g., !8c32abcd)
+            return self.client.myId
+        except Exception as e:
+            logger.error(f"Failed to get local node name: {e}")
+            return "Meshtastic Radio"
 
     def on_message_received(self, packet, interface):
         """Callback for incoming packets."""
@@ -130,22 +152,3 @@ class MeshtasticManager:
         except Exception as e:
             logger.error(f"Send failed: {e}")
             return False
-
-    def get_local_node_name(self):
-        """Returns the Long Name of the connected radio."""
-        if not self.client or not self.is_connected:
-            return None
-        try:
-            # Use myId (e.g. !8c32abcd) as it's the most reliable key
-            my_id = self.client.myId
-            node = self.nodes.get(my_id)
-            if node and 'user' in node:
-                return node['user'].get('longName', my_id)
-
-            # Fallback to fetching node info
-            my_node = self.client.getMyNodeInfo()
-            if my_node:
-                return my_node.get('user', {}).get('longName')
-            return my_id
-        except:
-            return None
