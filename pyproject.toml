@@ -24,6 +24,10 @@ dependencies = [
 meshtastic-mac-client = "meshtastic_mac_client.main:main"
 
 [tool.setuptools]
-# This tells setuptools to include your subfolders (ui, core, assets)
-packages = ["meshtastic_mac_client", "meshtastic_mac_client.core", "meshtastic_mac_client.ui"]
+# Use find_packages to automatically detect ui, core, and assets
+packages = {find = {}}
 include-package-data = true
+
+[tool.setuptools.package-data]
+# Ensures any non-python files in assets are included
+"*" = ["assets/*"]
