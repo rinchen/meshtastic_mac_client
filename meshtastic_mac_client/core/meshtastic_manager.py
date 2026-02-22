@@ -22,6 +22,9 @@ class MeshtasticManager:
 
         pub.subscribe(self.on_message_received, "meshtastic.receive.text")
         pub.subscribe(self.on_node_update, "meshtastic.node.updated")
+        
+        self.on_telemetry_received_cb = None
+        pub.subscribe(self.on_telemetry_received, "meshtastic.receive.telemetry")
 
     async def scan_devices(self):
         """Scan for Meshtastic BLE devices."""
@@ -192,3 +195,22 @@ class MeshtasticManager:
         except Exception as e:
             logger.error(f"Failed to send config: {e}")
             return False
+
+    def on_telemetry_received(self, packet, interface):
+        """Callback for incoming telemetry data (battery, voltage, etc)."""
+        try:
+            data = packet.get('decoded', {}).get('telemetry', {})
+            device_metrics = data.get('deviceMetrics', {})
+
+            # Extract Battery Voltage and SNR/RSSI
+            battery = device_metrics.get('batteryLevel') # Percentage
+            voltage = device_metrics.get('voltage')      # Voltage
+            rx_rssi = packet.get('rxRssi')               # Signal strength
+
+            if self.on_telemetry_received_cb:
+                # Send the data to the UI thread
+                self.loop.call_soon_threadsafe(
+                    self.on_telemetry_received_cb, voltage, rx_rssi
+                )
+        except Exception as e:
+            logger.error(f"Error parsing telemetry: {e}")

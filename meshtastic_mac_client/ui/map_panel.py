@@ -13,27 +13,25 @@ class MapPanel(QWidget):
         self.layout.addWidget(self.web_view)
 
     def update_map(self, nodes):
-        # Default to Longmont, CO (NV0N area)
+        # Default to Longmont, CO (User's area)
         center_lat, center_lon = 40.1672, -105.1019
         
-        # 1. Convert Rows to dicts so .get() works
+        # Convert database rows/objects to dicts
         nodes_dict = [dict(n) if not isinstance(n, dict) else n for n in nodes]
-        
-        # 2. IMPORTANT: Filter using nodes_dict, not nodes
         valid_nodes = [n for n in nodes_dict if n.get('position_lat') and n.get('position_lon')]
         
         if valid_nodes:
+            # Center on the first valid node found
             center_lat = valid_nodes[0]['position_lat']
             center_lon = valid_nodes[0]['position_lon']
 
         m = folium.Map(location=[center_lat, center_lon], zoom_start=12)
         
         for node in valid_nodes:
-            # Now node is a dict, so .get() is safe
-            name = node.get('long_name') or node.get('short_name') or str(node.get('id'))
+            name = node.get('user', {}).get('longName') or node.get('id')
             folium.Marker(
                 [node['position_lat'], node['position_lon']],
-                popup=f"<b>{name}</b><br>ID: {node['id']}",
+                popup=f"Node: {name}",
                 tooltip=name
             ).add_to(m)
 

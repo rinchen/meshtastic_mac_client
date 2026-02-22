@@ -59,23 +59,41 @@ class MainWindow(QMainWindow):
 
         # Connect Manager Signals to UI Slots
         self.manager.on_message_received_cb = self.chat_panel.on_new_message
-        self.manager.on_node_updated_cb = self.nodes_panel.on_node_update
+        self.manager.on_node_updated_cb = self.on_node_updated
 
         # Connect ConnectionPanel signals to update the Status Bar
         self.conn_panel.signals.connecting.connect(self.on_connecting)
         self.conn_panel.signals.connected.connect(self.on_device_connected)
         self.conn_panel.signals.disconnected.connect(self.on_device_disconnected)
 
-        # Initial map load from Database
+        # Initial load from Database
+        QTimer.singleShot(500, self.nodes_panel.refresh_list)
         QTimer.singleShot(1000, self.refresh_map)
-
-    def on_node_updated(self, node, interface):
-        """Called by the manager when a node changes."""
-        # Update the Node List tab
-        self.nodes_panel.on_node_update(node, interface)
         
-        # Update the Map tab
-        self.refresh_map()
+        # Telemetry
+        self.manager.on_telemetry_received_cb = self.telemetry_panel.handle_real_telemetry
+
+        # Pre-populate map and list with nodes already in the database
+        if self.manager.nodes:
+            initial_nodes = list(self.manager.nodes.values())
+            self.map_panel.update_map(initial_nodes)
+            self.node_list_panel.refresh_list()
+
+        # Connect the manager's update callback so new updates also refresh the map
+        self.manager.on_node_updated_cb = self.handle_node_update
+
+    def on_node_updated(self, node):
+        """Called when a node's info is updated."""
+        # Refresh data from manager
+        all_nodes = list(self.manager.nodes.values())
+
+        # Update the Map
+        if hasattr(self, 'map_panel'):
+            self.map_panel.update_map(all_nodes)
+
+        # Update the List
+        if hasattr(self, 'node_list_panel'):
+            self.node_list_panel.refresh_list()
 
     def refresh_map(self):
         """Fetch all nodes from DB and refresh the map markers."""
