@@ -9,9 +9,10 @@ class ConnectionSignals(QObject):
     disconnected = pyqtSignal()
 
 class ConnectionPanel(QWidget):
-    def __init__(self, main_window):
-        super().__init__()
-        self.main = main_window
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.parent = parent
+        self.main = parent
         self.signals = ConnectionSignals()
         self.layout = QVBoxLayout(self)
 

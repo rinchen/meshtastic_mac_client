@@ -1,12 +1,13 @@
-from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QTextEdit, 
+from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QTextEdit,
                              QHBoxLayout, QPushButton, QComboBox, QLabel)
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtGui import QTextCursor
 
 class ChatPanel(QWidget):
-    def __init__(self, main_window):
-        super().__init__()
-        self.main = main_window
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.parent = parent
+        self.main = parent
         self.layout = QVBoxLayout(self)
 
         # Message History

@@ -10,16 +10,9 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class MeshtasticManager:
-    def __init__(self, db_manager):
+    def __init__(self, db_manager, loop):
         self.db = db_manager
-        self.client = None
-        self.device_name = None
-        self.is_connected = False
-        self.loop = asyncio.get_running_loop()
-        
-        # UI Callback Slots
-        self.on_message_received_cb = None
-        self.on_node_updated_cb = None
+        self.loop = loop
 
     async def scan_devices(self):
         """Scan for Meshtastic BLE devices."""

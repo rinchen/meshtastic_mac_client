@@ -6,9 +6,11 @@ import pyqtgraph as pg
 import numpy as np
 
 class TelemetryPanel(QWidget):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.parent = parent
         self.layout = QVBoxLayout(self)
+
         
         # Setup Plot
         self.plot_widget = pg.PlotWidget(title="Battery Voltage & RSSI")

@@ -9,12 +9,11 @@ from meshtastic_mac_client.core.database import DatabaseManager
 
 def main():
     app = QApplication(sys.argv)
-    app.setStyle("Fusion")
-
     loop = qasync.QEventLoop(app)
     asyncio.set_event_loop(loop)
 
-    window = MainWindow()
+    # Pass the loop to MainWindow
+    window = MainWindow(loop)
     window.show()
 
     with loop:

@@ -13,14 +13,16 @@ from meshtastic_mac_client.ui.telemetry_panel import TelemetryPanel
 from meshtastic_mac_client.ui.admin_panel import AdminPanel
 
 class MainWindow(QMainWindow):
-    def __init__(self):
+    def __init__(self, loop):
         super().__init__()
+        self.loop = loop
+        self.db = DatabaseManager()
+        self.manager = MeshtasticManager(self.db, self.loop)
+        
         self.setWindowTitle("Meshtastic macOS Client")
         self.resize(1200, 800)
 
-        # Initialize Core
-        self.db = DatabaseManager()
-        self.manager = MeshtasticManager(self.db)
+        self.manager = MeshtasticManager(self.db, self.loop)
 
         # UI Setup
         central_widget = QWidget()
@@ -64,6 +66,7 @@ class MainWindow(QMainWindow):
 if __name__ == "__main__":
     import sys
     import qasync
+    import asyncio
     from PyQt6.QtWidgets import QApplication
 
     # Create the QApplication
@@ -74,7 +77,7 @@ if __name__ == "__main__":
     asyncio.set_event_loop(loop)
 
     # Create and Show Window
-    window = MainWindow()
+    window = MainWindow(loop)
     window.show()
 
     # Run the loop

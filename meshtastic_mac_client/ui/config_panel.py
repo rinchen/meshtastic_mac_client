@@ -4,9 +4,10 @@ from PyQt6.QtCore import pyqtSignal
 from meshtastic_mac_client.core.meshtastic_manager import MeshtasticManager
 
 class ConfigPanel(QWidget):
-    def __init__(self, main_window):
-        super().__init__()
-        self.main = main_window
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.parent = parent
+        self.main = parent
         self.layout = QVBoxLayout(self)
 
         # Radio Settings Group

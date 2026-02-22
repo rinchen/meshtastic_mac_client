@@ -6,8 +6,9 @@ import folium
 import os
 
 class MapPanel(QWidget):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.parent = parent
         self.layout = QVBoxLayout(self)
         
         # Setup Web View
