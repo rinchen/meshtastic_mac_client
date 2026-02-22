@@ -2,7 +2,7 @@ import asyncio
 import logging
 from bleak import BleakScanner, BleakClient
 from pubsub import pub
-from meshtastic.ble import BLEInterface
+from meshtastic.ble_interface import BLEInterface
 from meshtastic.protobuf import mesh_pb2
 from meshtastic_mac_client.core.database import DatabaseManager
 
