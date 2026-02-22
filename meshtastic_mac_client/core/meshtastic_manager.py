@@ -14,10 +14,17 @@ class MeshtasticManager:
         self.db = db_manager
         self.loop = loop
 
-    async def scan_devices(self):
-        """Scan for Meshtastic BLE devices."""
+async def scan_devices(self):
+        """Scan for Meshtastic BLE devices with a cache warm-up."""
+        # Pulse the scanner for 2 seconds to wake up the macOS cache
+        await BleakScanner.discover(timeout=2.0)
+        
+        # Now perform the actual 10-second scan
         devices = await BleakScanner.discover(timeout=10.0)
-        # Just return everything found that has a name
+        
+        # Log results for transparency
+        logger.info(f"Scan complete. Total devices with names: {len([d for d in devices if d.name])}")
+        
         return [d for d in devices if d.name]
 
     async def connect(self, device_address):
