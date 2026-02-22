@@ -3,10 +3,10 @@
 <head>
     
     <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
-    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js">} else { setTimeout(initMap, 100); } } window.onload = initMap; </script>
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js">} else { setTimeout(initMap, 100); } } window.onload = initMap; </script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js">} else { setTimeout(initMap, 100); } } window.onload = initMap; </script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.js">} else { setTimeout(initMap, 100); } } window.onload = initMap; </script>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.css"/>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css"/>
     <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css"/>
@@ -17,7 +17,7 @@
             <meta name="viewport" content="width=device-width,
                 initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
             <style>
-                #map_3a7b3bf28ae87ad1028f88c3621cc78e {
+                #map_fac2ebc369f813b883caa35bb8e00fc1 {
                     position: relative;
                     width: 100.0%;
                     height: 100.0%;
@@ -47,21 +47,24 @@
             <script>
                 L_NO_TOUCH = false;
                 L_DISABLE_3D = false;
-            } else { setTimeout(initMap, 100); } } window.onload = initMap; </script>
+            </script>
 
         
 </head>
 <body>
     
     
-            <div class="folium-map" id="map_3a7b3bf28ae87ad1028f88c3621cc78e" ></div>
+            <div class="folium-map" id="map_fac2ebc369f813b883caa35bb8e00fc1" ></div>
         
 </body>
 <script>
+(function retry() {
+  if (typeof L !== 'undefined') {
     
     
-            var map_3a7b3bf28ae87ad1028f88c3621cc78e = L.map(
-                "map_3a7b3bf28ae87ad1028f88c3621cc78e",
+    
+            var map_fac2ebc369f813b883caa35bb8e00fc1 = L.map(
+                "map_fac2ebc369f813b883caa35bb8e00fc1",
                 {
                     center: [40.1672, -105.1019],
                     crs: L.CRS.EPSG3857,
@@ -78,7 +81,7 @@
 
         
     
-            var tile_layer_a186e794cb8953325b47d101fabf0cfb = L.tileLayer(
+            var tile_layer_7df36e29b6c9498d69388d5871e93adb = L.tileLayer(
                 "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
                 {
   "minZoom": 0,
@@ -95,7 +98,12 @@
             );
         
     
-            tile_layer_a186e794cb8953325b47d101fabf0cfb.addTo(map_3a7b3bf28ae87ad1028f88c3621cc78e);
+            tile_layer_7df36e29b6c9498d69388d5871e93adb.addTo(map_fac2ebc369f813b883caa35bb8e00fc1);
         
-} else { setTimeout(initMap, 100); } } window.onload = initMap; </script>
+
+  } else {
+    setTimeout(retry, 100);
+  }
+})();
+</script>
 </html>

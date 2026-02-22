@@ -30,8 +30,8 @@ class MeshtasticManager:
             # First scan to populate Bleak's internal cache
             await BleakScanner.discover(timeout=2.0)
             devices = await BleakScanner.discover(timeout=5.0)
-            # Filter for devices that look like Meshtastic radios
-            return [d for d in devices if d.name and ("Meshtastic" in d.name or "unnamed" in d.name.lower())]
+
+            return [d for d in devices if d.name]
         except Exception as e:
             logger.error(f"Scan failed: {e}")
             return []
@@ -62,17 +62,19 @@ class MeshtasticManager:
                 self.is_connected = False
 
     def on_message_received(self, packet, interface):
-        """Callback for incoming text messages."""
+        """Callback for incoming packets."""
         try:
             data = packet.get('decoded', {})
             if data.get('portnum') == 'TEXT_MESSAGE_APP' or 'text' in data:
-                payload = data.get('text')
-                sender_id = packet.get('fromId')
+                payload = data.get('text', '')
+                sender_id = packet.get('fromId') or packet.get('from')
                 channel = packet.get('channel', 0)
-                
+
+                if not payload: return
+
                 # Save to DB
                 self.db.save_message(sender_id, "REMOTE", payload, channel)
-                
+
                 # Update UI
                 display_name = self.get_node_display_name(sender_id)
                 if self.on_message_received_cb:
@@ -80,7 +82,7 @@ class MeshtasticManager:
                         self.on_message_received_cb, display_name, "REMOTE", payload, channel
                     )
         except Exception as e:
-            logger.error(f"Error processing message: {e}")
+               logger.error(f"Error processing message: {e}")
 
     def on_node_update(self, node, interface=None):
         """Update the local node cache and database."""
@@ -130,10 +132,20 @@ class MeshtasticManager:
             return False
 
     def get_local_node_name(self):
+        """Returns the Long Name of the connected radio."""
         if not self.client or not self.is_connected:
             return None
         try:
+            # Use myId (e.g. !8c32abcd) as it's the most reliable key
+            my_id = self.client.myId
+            node = self.nodes.get(my_id)
+            if node and 'user' in node:
+                return node['user'].get('longName', my_id)
+
+            # Fallback to fetching node info
             my_node = self.client.getMyNodeInfo()
-            return my_node.get('user', {}).get('longName') if my_node else None
+            if my_node:
+                return my_node.get('user', {}).get('longName')
+            return my_id
         except:
             return None
