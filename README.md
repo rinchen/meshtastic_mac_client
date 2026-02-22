@@ -22,6 +22,8 @@ A native, fully-featured desktop application built with **PyQt6** and **qasync**
 
 ## Installation
 
+To ensure Bluetooth stability on macOS, it is recommended to use Python 3.13.
+
 1.  **Clone the repository:**
     ```bash
     git clone <repository-url>
@@ -29,10 +31,9 @@ A native, fully-featured desktop application built with **PyQt6** and **qasync**
     ```
 
 2.  **Install the application:**
-    *Note: Ensure you have a `pyproject.toml` or `setup.py` file in the root directory for `pipx install .` to work correctly.*
+    *Note: Ensure you have the `pyproject.toml` file in the root directory for `pipx install .` to work correctly.*
     ```bash
-    pipx install .
-    ```
+    pipx install --python python3.13 -e . --force    ```
 
 ## Usage
 
@@ -49,6 +50,20 @@ A native, fully-featured desktop application built with **PyQt6** and **qasync**
     *   Click **Scan Devices** to find your Meshtastic node.
     *   Select it from the dropdown and click **Connect**.
 
+### 4. Implementation Steps
+1.  **Sync Files:** Update your `pyproject.toml` with the version pins above.
+2.  **Clean Environment:**
+    ```bash
+    pipx uninstall meshtastic-mac-client
+    rm -rf *.egg-info
+    ```
+3.  **Reinstall:**
+    ```bash
+    pipx install --python python3.13 -e .
+    ```
+
+By pinning `meshtastic>=2.7.7` in the `toml`, `pipx` will guarantee that the `meshtastic.ble` module is present in the virtual environment it creates.
+
 ## Offline Maps
 
 The application includes a mapping feature that can load tiles from a local directory to function without an internet connection.
@@ -56,29 +71,3 @@ The application includes a mapping feature that can load tiles from a local dire
 1.  Create a folder named `offline_tiles` inside the `assets` directory.
 2.  Download OpenStreetMap tiles (`.png` files) for your area of interest and place them into this folder.
 3.  Update the `map_panel.py` file to point the `QWebEngineProfile` cache location to this folder.
-
-## Project Structure
-
-The application is modular, separating logic from UI components:
-
-```text
-meshtastic_mac_client/
-├── main.py                 # Entry point (qasync loop setup)
-├── requirements.txt        # Python dependencies
-├── core/
-│   ├── __init__.py
-│   ├── database.py         # SQLite persistence layer
-│   └── meshtastic_manager.py # BLE connection & API bridge
-├── ui/
-│   ├── __init__.py
-│   ├── main_window.py      # Main container
-│   ├── connection_panel.py # Scan/Connect UI
-│   ├── chat_panel.py       # Messaging UI
-│   ├── node_list_panel.py  # NodeDB visualization
-│   ├── config_panel.py     # Radio/Channel settings
-│   ├── map_panel.py        # WebEngine mapping
-│   ├── telemetry_panel.py  # Graphs
-│   └── admin_panel.py      # Remote commands
-└── assets/
-    └── offline_tiles/      # (Optional) Local map tiles
-

@@ -14,10 +14,14 @@ classifiers = [
     "Operating System :: MacOS :: MacOS X",
 ]
 dependencies = [
-    "PyQt6",
-    "qasync",
-    "meshtastic",
-    "bleak",
+    "PyQt6>=6.6.1",
+    "qasync>=0.27.1",
+    "meshtastic>=2.7.7",  # Required for meshtastic.ble
+    "bleak>=0.21.1",      # Essential for macOS BLE stability
+    "pyqtgraph>=0.13.3",
+    "folium>=0.15.1",
+    "Pillow>=10.1.0",
+    "pypubsub>=4.0.3",
 ]
 
 [project.scripts]
