@@ -1,3 +1,5 @@
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QTableWidget, QTableWidgetItem, QHeaderView
+
 class NodeListPanel(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)

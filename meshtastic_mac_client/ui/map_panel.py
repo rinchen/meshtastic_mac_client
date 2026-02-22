@@ -16,7 +16,12 @@ class MapPanel(QWidget):
         # Default to Longmont, CO (NV0N area)
         center_lat, center_lon = 40.1672, -105.1019
         
-        valid_nodes = [n for n in nodes if n.get('position_lat') and n.get('position_lon')]
+        # 1. Convert Rows to dicts so .get() works
+        nodes_dict = [dict(n) if not isinstance(n, dict) else n for n in nodes]
+        
+        # 2. IMPORTANT: Filter using nodes_dict, not nodes
+        valid_nodes = [n for n in nodes_dict if n.get('position_lat') and n.get('position_lon')]
+        
         if valid_nodes:
             center_lat = valid_nodes[0]['position_lat']
             center_lon = valid_nodes[0]['position_lon']
@@ -24,7 +29,7 @@ class MapPanel(QWidget):
         m = folium.Map(location=[center_lat, center_lon], zoom_start=12)
         
         for node in valid_nodes:
-            # Note: We use the names as stored in the SQLite DB (snake_case)
+            # Now node is a dict, so .get() is safe
             name = node.get('long_name') or node.get('short_name') or str(node.get('id'))
             folium.Marker(
                 [node['position_lat'], node['position_lon']],
