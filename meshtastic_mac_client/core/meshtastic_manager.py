@@ -25,74 +25,65 @@ class MeshtasticManager:
         """Returns name in format: LongName (hexid)"""
         node = self.nodes.get(node_id)
         if node and 'user' in node:
-            # Use the data structure stored in your DB
             long_name = node['user'].get('longName', 'Unknown')
             hex_id = node['user'].get('id', node_id)
             return f"{long_name} <small>({hex_id})</small>"
         
-        # Fallback if node isn't in cache yet
         return f"Unknown <small>({node_id})</small>"
 
     async def scan_devices(self):
-        """Scan for Meshtastic BLE devices with a cache warm-up."""
-        # Warm up the macOS BLE cache
+        """Scan for Meshtastic BLE devices."""
         await BleakScanner.discover(timeout=2.0)
-        # Actual scan
-        devices = await BleakScanner.discover(timeout=5.0) # 5s is usually plenty after a warmup
+        devices = await BleakScanner.discover(timeout=5.0)
         return [d for d in devices if d.name]
 
     async def connect(self, device_address):
-        """Connect to a specific device without blocking the UI."""
+        """Connect to a specific device."""
         if self.is_connected:
-            logger.info("Manager: Already connected, skipping request.")
             return True
 
         try:
             logger.info(f"Manager: Initializing BLE connection to {device_address}")
             
             def _init_ble():
-                # This call is synchronous and contains the 10s internal scan
                 return BLEInterface(address=device_address, noProto=False)
 
-            # We use the executor so the UI stays responsive during the 10s scan
             self.client = await self.loop.run_in_executor(None, _init_ble)
             
             pub.subscribe(self.on_receive, "meshtastic.receive")
             pub.subscribe(self.on_node_update, "meshtastic.node.updated")
             
             self.is_connected = True
-            logger.info("Manager: Connection successful.")
             return True
         except Exception as e:
-            # If the radio is busy or phone is connected, it lands here
             logger.error(f"Manager: Connection failed error: {e}")
             self.is_connected = False
             return False
 
     async def disconnect(self):
         if self.client:
-            # BLEInterface close is typically synchronous in the library
-            self.client.close()
-            self.is_connected = False
-            self.client = None
+            pub.unsubscribe(self.on_receive, "meshtastic.receive")
+            pub.unsubscribe(self.on_node_update, "meshtastic.node.updated")
+            try:
+                self.client.close()
+            except Exception as e:
+                logger.error(f"Disconnect error: {e}")
+            finally:
+                self.is_connected = False
+                self.client = None
 
     def on_receive(self, packet, interface):
-        """Handle incoming packets and persist to DB."""
+        """Handle incoming packets."""
         decoded = packet.get("decoded", {})
-        
         if decoded.get("portnum") != "TEXT_MESSAGE_APP":
             return
 
         node_id = packet.get("fromId") or packet.get("from") or "Unknown"
         payload = decoded.get("text", "").strip()
-        
-        if not payload:
-            return
+        if not payload: return
 
         channel = packet.get("channel", 0)
         self.db.save_message(node_id, "REMOTE", payload, channel)
-        
-        # Get the formatted name for the UI
         display_name = self.get_node_display_name(node_id)
         
         if self.on_message_received_cb:
@@ -104,11 +95,8 @@ class MeshtasticManager:
         """Update the local node cache."""
         node_id_int = node.get('num')
         node_id_hex = node.get('user', {}).get('id')
-
-        if node_id_int:
-            self.nodes[node_id_int] = node
-        if node_id_hex:
-            self.nodes[node_id_hex] = node
+        if node_id_int: self.nodes[node_id_int] = node
+        if node_id_hex: self.nodes[node_id_hex] = node
             
         self.db.save_node(node)
         if self.on_node_updated_cb:
@@ -118,17 +106,20 @@ class MeshtasticManager:
         """Send a text message over the radio."""
         if not self.is_connected or not self.client:
             return False
-        try:
-            # sendText is a method provided by the Meshtastic BLEInterface
-            self.client.sendText(text, channelIndex=channel_index, destinationId=destination)
             
-            # Save our own message to the DB for history
+        # Use 0xFFFFFFFF for broadcast (all nodes) if no destination is provided
+        target = destination if destination is not None else 0xFFFFFFFF
+        
+        try:
+            # Explicitly pass destinationId to avoid None warnings in the library
+            self.client.sendText(text, destinationId=target, channelIndex=channel_index)
+            
             self.db.save_message("USER", "USER", text, channel_index)
             
-            # Update the UI locally
             if self.on_message_received_cb:
-                # We show 'You' or 'USER' for our own messages
-                self.on_message_received_cb("Me", "USER", text, channel_index)
+                self.loop.call_soon_threadsafe(
+                    self.on_message_received_cb, "Me", "USER", text, channel_index
+                )
             return True
         except Exception as e:
             logger.error(f"Send failed: {e}")

@@ -12,12 +12,14 @@ def main():
     loop = qasync.QEventLoop(app)
     asyncio.set_event_loop(loop)
 
-    # Pass the loop to MainWindow
     window = MainWindow(loop)
     window.show()
 
-    with loop:
-        loop.run_forever()
+    try:
+        with loop:
+            loop.run_forever()
+    finally:
+        sys.exit(0)
 
 if __name__ == "__main__":
     main()

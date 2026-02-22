@@ -2,11 +2,11 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QTextEdit,
                              QHBoxLayout, QPushButton, QComboBox, QLabel)
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtGui import QTextCursor
+import asyncio
 
 class ChatPanel(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.parent = parent
         self.main = parent
         self.layout = QVBoxLayout(self)
 
@@ -17,7 +17,6 @@ class ChatPanel(QWidget):
 
         # Input Area
         input_layout = QHBoxLayout()
-        
         self.combo_channel = QComboBox()
         self.combo_channel.addItems(["Primary", "Secondary 1", "Secondary 2"])
         input_layout.addWidget(QLabel("Channel:"))
@@ -34,30 +33,20 @@ class ChatPanel(QWidget):
         self.layout.addLayout(input_layout)
 
     def on_new_message(self, display_name, role, payload, channel):
-        """Appends message with LongName (hexid) formatting."""
-        if not payload:
-            return
-
+        if not payload: return
         cursor = self.txt_history.textCursor()
         cursor.movePosition(QTextCursor.MoveOperation.End)
-        
         role_color = "blue" if role == "USER" else "darkgreen"
-        
-        # We use the display_name passed from the manager which includes <small> tags
         cursor.insertHtml(f"<b style='color:{role_color}'>[{display_name}]</b>: {payload}<br>")
-        
         self.txt_history.setTextCursor(cursor)
         self.txt_history.ensureCursorVisible()
 
     async def send_message(self):
-        text = self.txt_input.toPlainText()
-        if not text:
-            return
+        text = self.txt_input.toPlainText().strip()
+        if not text: return
         
-        # Determine channel index (0 for Primary, 1 for Sec 1, etc.)
         channel_idx = self.combo_channel.currentIndex()
+        success = await self.main.manager.send_text(text, channel_index=channel_idx)
         
-        success = await self.main.manager.send_text(text, channel_idx)
         if success:
             self.txt_input.clear()
-

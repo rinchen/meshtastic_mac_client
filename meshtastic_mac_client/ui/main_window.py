@@ -11,6 +11,7 @@ from meshtastic_mac_client.ui.config_panel import ConfigPanel
 from meshtastic_mac_client.ui.map_panel import MapPanel
 from meshtastic_mac_client.ui.telemetry_panel import TelemetryPanel
 from meshtastic_mac_client.ui.admin_panel import AdminPanel
+import asyncio
 
 class MainWindow(QMainWindow):
     def __init__(self, loop):
@@ -18,14 +19,15 @@ class MainWindow(QMainWindow):
         self.loop = loop
         self.db = DatabaseManager()
         self.manager = MeshtasticManager(self.db, self.loop)
-        
-        self.setWindowTitle("Meshtastic macOS Client")
-        self.resize(1200, 800)
 
         # UI Setup
+        self.setWindowTitle("Meshtastic macOS Client")
+        self.resize(1200, 800)
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
         layout = QVBoxLayout(central_widget)
+        layout.setContentsMargins(15, 15, 15, 15)
+        layout.setSpacing(10)
 
         # Tabs
         self.tabs = QTabWidget()
