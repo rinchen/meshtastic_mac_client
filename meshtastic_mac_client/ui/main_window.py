@@ -77,9 +77,12 @@ class MainWindow(QMainWindow):
 
         # Pre-populate map and list with nodes already in the database
         if self.manager.nodes:
-            initial_nodes = list(self.manager.nodes.values())
-            self.map_panel.update_map(initial_nodes)
+            # Update the list panel immediately (standard widgets are fast)
             self.nodes_panel.refresh_list()
+            
+            # Defer the map update by 1 second to ensure the WebEngine is ready
+            # We pull the values inside the lambda to ensure we have the latest data
+            QTimer.singleShot(1000, lambda: self.map_panel.update_map(list(self.manager.nodes.values())))
 
         # Connect the manager's update callback so new updates also refresh the map
         self.manager.on_node_updated_cb = self.on_node_updated

@@ -60,4 +60,4 @@ class MapPanel(QWidget):
 
         # Use setHtml with a baseUrl to avoid file permission/path issues
         data = m.get_root().render()
-        self.web_view.setHtml(data, QUrl("file://"))
+        self.web_view.setHtml(data, QUrl("http://localhost"))
