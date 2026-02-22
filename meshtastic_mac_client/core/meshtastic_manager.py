@@ -1,7 +1,7 @@
 import asyncio
 import logging
 from bleak import BleakScanner, BleakClient
-from meshtastic import bluetooth_interface, mesh_interface
+from meshtastic.ble import BLEInterface
 from meshtastic.protobuf import mesh_pb2
 from meshtastic_mac_client.core.database import DatabaseManager
 
@@ -26,31 +26,21 @@ class MeshtasticManager:
                 meshtastic_devices.append(device)
         return meshtastic_devices
 
-    async def connect(self, device_name):
-        """Connect to a specific device using Meshtastic library."""
-        try:
-            # The meshtastic library handles the BLE connection internally
-            # We use the bluetooth_interface which is async
-            self.client = bluetooth_interface.BluetoothInterface(
-                deviceName=device_name,
-                debug=False
-            )
-            
-            # Connect logic
-            await self.client.connect()
-            self.is_connected = True
-            self.device_name = device_name
-            
-            # Start listening
-            self.client.onReceive = self.on_receive
-            self.client.onNode = self.on_node_update
-            
-            logger.info(f"Connected to {device_name}")
-            return True
-        except Exception as e:
-            logger.error(f"Connection failed: {e}")
-            self.is_connected = False
-            return False
+async def connect(self, device_address):
+    """Connect to a specific device using Meshtastic library."""
+    try:
+        # The library uses BLEInterface for Bluetooth connections
+        self.client = BLEInterface(
+            address=device_address,
+            noProto=False
+        )
+        
+        self.is_connected = True
+        self.device_name = device_address
+        return True
+    except Exception as e:
+        logger.error(f"Failed to connect: {e}")
+        return False
 
     async def disconnect(self):
         if self.client:
