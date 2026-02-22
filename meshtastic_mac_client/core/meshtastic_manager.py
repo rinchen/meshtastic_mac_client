@@ -59,8 +59,8 @@ class MeshtasticManager:
         if self.client:
             logger.info("Disconnecting...")
             try:
-                # BLEInterface.close() handles the underlying Serial/BLE closure
-                # We must await the executor to ensure the thread finishes
+                # We must await the executor and ensure it's not blocked
+                # BLEInterface.close() is a blocking call
                 await self.loop.run_in_executor(None, self.client.close)
                 logger.info("Interface closed successfully.")
             except Exception as e:

@@ -112,15 +112,20 @@ class MainWindow(QMainWindow):
         """Cleanup resources and stop the loop."""
         print("Starting graceful shutdown...")
         try:
-            if self.manager and self.manager.client:
-                # 1. Disconnect first while the loop is still fully healthy
-                # Increase timeout slightly to allow the thread executor to finish
+            if self.manager:
+                # 1. Wait for the manager to finish closing the radio
                 await asyncio.wait_for(self.manager.disconnect(), timeout=5.0)
+
+            # 2. Shutdown the executor to ensure no background threads are hanging
+            # This is the "secret sauce" to prevent the force-quit requirement
+            executor = self.loop._default_executor
+            if executor:
+                executor.shutdown(wait=True)
+
         except Exception as e:
-            print(f"Shutdown notice (expected if radio busy): {e}")
+            print(f"Shutdown notice: {e}")
         finally:
-            # 2. Stop the loop and quit the app
-            # Use call_soon to ensure we aren't stopping mid-task
+            # 3. Stop the loop and finally quit the application
             self.loop.stop()
             QApplication.instance().quit()
 
