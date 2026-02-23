@@ -50,3 +50,6 @@ class ChatPanel(QWidget):
         
         if success:
             self.txt_input.clear()
+            # Manually update the UI for the local user
+            self.on_new_message("Me", "USER", text, "Primary")
+            self.txt_input.clear()

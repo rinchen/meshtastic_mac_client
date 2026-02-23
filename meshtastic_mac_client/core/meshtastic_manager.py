@@ -46,6 +46,7 @@ class MeshtasticManager:
             
             self.is_connected = True
             self.device_name = device_address
+            logger.info(f"Connected to: {self.device_name}")
             return True
         except Exception as e:
             logger.error(f"Failed to connect: {e}")
